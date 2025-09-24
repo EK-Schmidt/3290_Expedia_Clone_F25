@@ -59,46 +59,48 @@ export const Login = () => {
     );
   }
 
-  function handleVerifyNumber() {
-    document.querySelector("#nextText").innerText = "Please wait...";
-    onCapture();
-    const phoneNumber = `+91${number}`;
-    const appVerifier = window.recaptchaVerifier;
-    if (number.length === 10) {
-      if (exist) {
-        signInWithPhoneNumber(auth, phoneNumber, appVerifier)
-          .then((confirmationResult) => {
-            // SMS sent. Prompt user to type the code from the message, then sign the
-            // user in with confirmationResult.confirm(code).
-            window.confirmationResult = confirmationResult;
-            setCheck({ ...check, verify: true });
-            document.querySelector(
-              "#loginMesageSuccess"
-            ).innerHTML = `Otp Send To ${number} !`;
-            document.querySelector("#loginMesageError").innerHTML = "";
-            document.querySelector("#nextText").style.display = "none";
-            // ...
-          })
-          .catch((error) => {
-            // Error; SMS not sent
-            // document.querySelector("#nextText").innerText = "Server Error"
-            // ...
-          });
-      } else {
-        document.querySelector("#loginMesageSuccess").innerHTML = ``;
-        document.querySelector("#loginMesageError").innerHTML =
-          "User does not exist Please Create Your Account !";
-          setInterval(() => {
-            window.location="/register"
-          }, 1000);
-      }
-      //
+function handleVerifyNumber() {
+  document.querySelector("#nextText").innerText = "Please wait...";
+  onCapture();
+  const phoneNumber = `+1${number}`;
+  const appVerifier = window.recaptchaVerifier;
+  if (number.length === 10) {
+    if (exist) {
+      signInWithPhoneNumber(auth, phoneNumber, appVerifier)
+        .then((confirmationResult) => {
+          // SMS sent. Prompt user to type the code from the message, then sign the
+          // user in with confirmationResult.confirm(code).
+          window.confirmationResult = confirmationResult;
+          setCheck({ ...check, verify: true });
+          document.querySelector(
+            "#loginMesageSuccess"
+          ).innerHTML = `Otp Send To ${number} !`;
+          document.querySelector("#loginMesageError").innerHTML = "";
+          document.querySelector("#nextText").style.display = "none";
+          // ...
+        })
+        .catch((error) => {
+          // Error; SMS not sent
+          // document.querySelector("#nextText").innerText = "Server Error"
+          // ...
+        });
     } else {
       document.querySelector("#loginMesageSuccess").innerHTML = ``;
       document.querySelector("#loginMesageError").innerHTML =
-        "Mobile Number is Invalid !";
+        "User does not exist Please Create Your Account !";
+        setInterval(() => {
+          window.location="/register"
+        }, 1000);
     }
+    //
+  } else {
+    document.querySelector("#loginMesageSuccess").innerHTML = ``;
+    document.querySelector("#loginMesageError").innerHTML =
+      "Mobile Number is Invalid !";
   }
+}
+
+
 
   //
   function verifyCode() {
@@ -131,12 +133,12 @@ export const Login = () => {
   };
   // console.log(isAuth)
 
-  useEffect(() => {
-    dispatch(fetch_users);
-    if (isAuth) {
-      window.location = "/";
-    }
-  }, [isAuth]);
+	useEffect(() => {
+	  dispatch(fetch_users());
+	  if (isAuth) {
+		window.location = "/";
+	  }
+	}, [isAuth]);
 
   return (
     <>

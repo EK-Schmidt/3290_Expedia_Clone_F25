@@ -1,4 +1,3 @@
-import axios from "axios";
 import {
   DELETE_FLIGHTS,
   FETCH_FLIGHTS,
@@ -8,73 +7,47 @@ import {
   POST_FLIGHT_SUCCESS,
 } from "./actionType";
 
-export const getFlightSuccess = (payload) => {
-  return { type: GET_FLIGHT_SUCCESS, payload };
-};
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
+import firebase_app from "../../01_firebase/config_firebase";
 
-export const postFlightSuccess = (payload) => {
-  return { type: POST_FLIGHT_SUCCESS };
-};
+const db = getFirestore(firebase_app);
 
-export const flightRequest = () => {
-  return { type: FLIGHT_REQUEST };
-};
+export const getFlightSuccess = (payload) => ({ type: GET_FLIGHT_SUCCESS, payload });
+export const postFlightSuccess = () => ({ type: POST_FLIGHT_SUCCESS });
+export const flightRequest = () => ({ type: FLIGHT_REQUEST });
+export const flightFailure = () => ({ type: FLIGHT_FAILURE });
+export const fetch_flights_product = (payload) => ({ type: FETCH_FLIGHTS, payload });
+export const handleDeleteProduct = (payload) => ({ type: DELETE_FLIGHTS, payload });
 
-export const flightFailure = () => {
-  return { type: FLIGHT_FAILURE };
-};
-
-//
-export const fetch_flights_product = (payload) => {
-  return { type: FETCH_FLIGHTS, payload };
-};
-//
-export const handleDeleteProduct = (payload) => {
-  return { type: DELETE_FLIGHTS, payload };
-};
-
-export const addFlight = (payload) => (dispatch) => {
+export const addFlight = (payload) => async (dispatch) => {
   dispatch(flightRequest());
-
-  axios
-    .post("http://localhost:8080/flight", payload) // https://makemytrip-api-data.onrender.com/flight
-    .then(() => {
-      dispatch(postFlightSuccess());
-    })
-    .catch((err) => {
-      dispatch(flightFailure());
-    });
+  try {
+    await addDoc(collection(db, "flights"), payload);
+    dispatch(postFlightSuccess());
+  } catch (err) {
+    console.error("Error adding flight:", err);
+    dispatch(flightFailure());
+  }
 };
 
-//
-export const fetchFlightProducts = (limit) => (dispatch) => {
+export const fetchFlightProducts = () => async (dispatch) => {
   dispatch(flightRequest());
-  axios
-    .get(`http://localhost:8080/flight?_limit=${limit}`)   //https://makemytrip-api-data.onrender.com/flight?_limit=${limit}
-    .then((res) => {
-      dispatch(fetch_flights_product(res.data));
-    })
-    .catch((err) => {
-      dispatch(flightFailure());
-    });
+  try {
+    const snapshot = await getDocs(collection(db, "flights"));
+    const flights = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    dispatch(fetch_flights_product(flights));
+  } catch (err) {
+    console.error("Error fetching flights:", err);
+    dispatch(flightFailure());
+  }
 };
 
 export const DeleteFlightProducts = (deleteId) => async (dispatch) => {
   try {
-    const res = await axios(
-      `http://localhost:8080/flight?${deleteId}`, //https://makemytrip-api-data.onrender.com/flight/${deleteId}
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    let data = await res.json();
-    console.log(data);
-
+    await deleteDoc(doc(db, "flights", deleteId));
     dispatch(handleDeleteProduct(deleteId));
-  } catch (e) {
-    console.log(e);
+  } catch (err) {
+    console.error("Error deleting flight:", err);
+    dispatch(flightFailure());
   }
 };

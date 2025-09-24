@@ -1,36 +1,54 @@
 import { Box, Image, Flex, Button } from "@chakra-ui/react";
-import axios from "axios";
 import { useToast } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
+import { getFirestore, collection, addDoc } from "firebase/firestore";
+import firebase_app from "../../01_firebase/config_firebase";
+
+import { useSelector } from "react-redux";
 
 export default function FlightCard({ data }) {
   const { id, airline, from, to, departure, arrival, price, totalTime } = data;
   const toast = useToast();
+  const db = getFirestore(firebase_app);
 
-  const handleClick = () => {
-    axios.post(`http://localhost:8000/flightcart`, data);
-    //   .then((res) => console.log(res))
-    //   .catch((err) => console.log(err))
+  const { activeUser } = useSelector((store) => ({
+    activeUser: store.LoginReducer.activeUser,
+  }));
 
-    toast({
-      title: "Flight Add to Cart",
-      description: "Please Proceed to Payment",
-      status: "success",
-      duration: 9000,
-      isClosable: true,
-    });
+  const handleClick = async () => {
+    try {
+      await addDoc(collection(db, "carts"), {
+        ...data,
+        userId: activeUser?.number || "guest",
+        createdAt: Date.now(),
+      });
+
+      toast({
+        title: "Flight added to Cart",
+        description: "Please proceed to checkout.",
+        status: "success",
+        duration: 4000,
+        isClosable: true,
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Could not add to cart.",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+      console.error("Add to cart error:", err);
+    }
   };
-
-  
 
   const Booknow = {
     marginTop: "3%",
-    // width:"164px",
     padding: "15px",
     height: "43px",
     background: "teal",
-    color: " #FFFFFF",
-    bordeRadius: "0.5rem",
+    color: "#FFFFFF",
+    borderRadius: "0.5rem",
     position: "relative",
     marginBottom: "1rem",
   };
@@ -70,7 +88,7 @@ export default function FlightCard({ data }) {
         <b style={{ fontSize: "14px" }}>{to} </b>
       </Flex>
       <Flex display={"flex"} flexDirection="column">
-        <h3>Duation</h3>
+        <h3>Duration</h3>
         <b>{totalTime}</b>
       </Flex>
       <Flex display={"flex"} flexDirection="column">
